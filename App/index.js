@@ -2,161 +2,94 @@
 // Combined code from all files
 
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, ScrollView, View, Image, FlatList, Button, ActivityIndicator, TextInput } from 'react-native';
-import axios from 'axios';
+import { SafeAreaView, StyleSheet, Text, TextInput, Button, View } from 'react-native';
+import NfcManager, { NfcTech, Ndef } from 'react-native-nfc-manager';
 
-const experiences = [
-    { id: '1', title: 'Soccer Player at Local Club', duration: '2017-2021' },
-    { id: '2', title: 'Marathon Runner', duration: '2015-Present' },
-];
+export default function App() {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
 
-const Profile = () => {
-    const renderExperience = ({ item }) => (
-        <View style={stylesProfile.experience}>
-            <Text style={stylesProfile.experienceTitle}>{item.title}</Text>
-            <Text>{item.duration}</Text>
-        </View>
-    );
-
-    return (
-        <View style={stylesProfile.container}>
-            <Image style={stylesProfile.avatar} source={{ uri: 'https://picsum.photos/100/100' }} />
-            <Text style={stylesProfile.name}>John Doe</Text>
-            <Text style={stylesProfile.bio}>Amateur Athlete | Marathon Runner | Soccer Player</Text>
-            <FlatList
-                data={experiences}
-                renderItem={renderExperience}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={stylesProfile.list}
-            />
-        </View>
-    );
-};
-
-const stylesProfile = StyleSheet.create({
-    container: {
-        alignItems: 'center',
-        padding: 20,
-        backgroundColor: '#f8f8f8',
-        margin: 10,
-        borderRadius: 10,
-    },
-    avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-        marginBottom: 10,
-    },
-    name: {
-        fontSize: 20,
-        fontWeight: 'bold',
-    },
-    bio: {
-        fontSize: 16,
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    list: {
-        width: '100%',
-    },
-    experience: {
-        marginBottom: 10,
-    },
-    experienceTitle: {
-        fontWeight: 'bold',
-    },
-});
-
-const Fundraising = () => {
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
-
-    const fetchMessage = async () => {
-        setLoading(true);
+    const handleSendNFC = async () => {
+        await NfcManager.start();
+        
         try {
-            const response = await axios.get('http://apihub.p.appply.xyz:3300/motd');
-            setMessage(response.data.message);
-        } catch (error) {
-            console.error(error);
-            setMessage('Failed to load message');
+            // Requesting NFC technology
+            await NfcManager.requestTechnology(NfcTech.Ndef);      
+
+            // Creating NDEF message
+            const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nEMAIL:${email}\nTEL:${phone}\nEND:VCARD`;
+            const bytes = Ndef.encodeMessage([Ndef.textRecord(vCard)]);
+            
+            // Writing the NDEF message to NFC Tag
+            if (bytes) {
+                await NfcManager.writeNdefMessage(bytes);
+                alert("Contact details written successfully!");
+            }
+        } catch (e) {
+            console.warn(e);
+            alert("An error occurred. Please try again.");
+        } finally {
+            // Clean up technology handling
+            NfcManager.setNfcDisabledListener(null);
+            NfcManager.setForegroundDispatchPendingIntent(null);
+            NfcManager.setNfcEnabledActivityClassName(null);
+            NfcManager.terminate();
         }
-        setLoading(false);
     };
 
     return (
-        <View style={stylesFundraising.container}>
-            <Text style={stylesFundraising.title}>Fundraising</Text>
-            <Button title="Donate Now" onPress={() => alert('Donation Successful!')} />
-            <Button title="Get Message of the Day" onPress={fetchMessage} />
-            {loading ? <ActivityIndicator size="large" color="#0000ff" /> : <Text>{message}</Text>}
-        </View>
-    );
-};
-
-const stylesFundraising = StyleSheet.create({
-    container: {
-        padding: 20,
-        backgroundColor: '#f8f8f8',
-        margin: 10,
-        borderRadius: 10,
-    },
-    title: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-});
-
-const CreateEvent = () => {
-    const [eventName, setEventName] = useState('');
-    const [eventDate, setEventDate] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const handleCreateEvent = () => {
-        setLoading(true);
-        setTimeout(() => {
-            alert('Event Created Successfully!');
-            setLoading(false);
-        }, 2000);
-    };
-
-    return (
-        <View style={stylesCreateEvent.container}>
-            <Text style={stylesCreateEvent.title}>Create Sporting Event</Text>
-            <ScrollView>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.form}>
+                <Text style={styles.title}>Send Contact Details via NFC</Text>
                 <TextInput
-                    style={stylesCreateEvent.input}
-                    placeholder="Event Name"
-                    value={eventName}
-                    onChangeText={setEventName}
+                    style={styles.input}
+                    placeholder="Name"
+                    value={name}
+                    onChangeText={setName}
                 />
                 <TextInput
-                    style={stylesCreateEvent.input}
-                    placeholder="Event Date"
-                    value={eventDate}
-                    onChangeText={setEventDate}
+                    style={styles.input}
+                    placeholder="Email"
+                    value={email}
+                    onChangeText={setEmail}
                 />
-                <Button title="Create Event" onPress={handleCreateEvent} />
-                {loading && <ActivityIndicator size="large" color="#0000ff" />}
-            </ScrollView>
-        </View>
+                <TextInput
+                    style={styles.input}
+                    placeholder="Phone"
+                    value={phone}
+                    onChangeText={setPhone}
+                />
+                <Button title="Send via NFC" onPress={handleSendNFC} />
+            </View>
+        </SafeAreaView>
     );
 }
 
-const stylesCreateEvent = StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
+        flex: 1,
+        paddingTop: 30, // to avoid overlapping with the status bar
+        backgroundColor: '#FFFFFF',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    form: {
+        width: '90%',
         padding: 20,
-        backgroundColor: '#f8f8f8',
-        margin: 10,
         borderRadius: 10,
+        backgroundColor: '#f8f8f8',
+        alignItems: 'center',
     },
     title: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginBottom: 20,
+        textAlign: 'center',
     },
     input: {
         height: 40,
+        width: '100%',
         borderColor: '#ccc',
         borderWidth: 1,
         marginBottom: 10,
@@ -165,29 +98,4 @@ const stylesCreateEvent = StyleSheet.create({
     },
 });
 
-export default function App() {
-    return (
-        <SafeAreaView style={stylesApp.container}>
-            <ScrollView>
-                <Text style={stylesApp.title}>Crowdfunding for Amateur Sports</Text>
-                <Profile />
-                <Fundraising />
-                <CreateEvent />
-            </ScrollView>
-        </SafeAreaView>
-    );
-}
-
-const stylesApp = StyleSheet.create({
-    container: {
-        flex: 1,
-        paddingTop: 30,
-        backgroundColor: '#FFFFFF',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        margin: 20,
-    },
-});
+export default App;
