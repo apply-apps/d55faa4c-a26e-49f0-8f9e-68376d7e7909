@@ -1,19 +1,8 @@
 // Filename: index.js
 // Combined code from all files
 
-import React from 'react';
-import {
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    ScrollView,
-    View,
-    Image,
-    FlatList,
-    Button,
-    ActivityIndicator,
-    TextInput
-} from 'react-native';
+import React, { useState } from 'react';
+import { SafeAreaView, StyleSheet, Text, ScrollView, View, Image, FlatList, Button, ActivityIndicator, TextInput } from 'react-native';
 import axios from 'axios';
 
 const experiences = [
@@ -23,33 +12,28 @@ const experiences = [
 
 const Profile = () => {
     const renderExperience = ({ item }) => (
-        <View style={profileStyles.experience}>
-            <Text style={profileStyles.experienceTitle}>{item.title}</Text>
+        <View style={stylesProfile.experience}>
+            <Text style={stylesProfile.experienceTitle}>{item.title}</Text>
             <Text>{item.duration}</Text>
         </View>
     );
 
     return (
-        <View style={profileStyles.container}>
-            <Image
-                style={profileStyles.avatar}
-                source={{ uri: 'https://picsum.photos/100/100' }}
-            />
-            <Text style={profileStyles.name}>John Doe</Text>
-            <Text style={profileStyles.bio}>
-                Amateur Athlete | Marathon Runner | Soccer Player
-            </Text>
+        <View style={stylesProfile.container}>
+            <Image style={stylesProfile.avatar} source={{ uri: 'https://picsum.photos/100/100' }} />
+            <Text style={stylesProfile.name}>John Doe</Text>
+            <Text style={stylesProfile.bio}>Amateur Athlete | Marathon Runner | Soccer Player</Text>
             <FlatList
                 data={experiences}
                 renderItem={renderExperience}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={profileStyles.list}
+                contentContainerStyle={stylesProfile.list}
             />
         </View>
     );
 };
 
-const profileStyles = StyleSheet.create({
+const stylesProfile = StyleSheet.create({
     container: {
         alignItems: 'center',
         padding: 20,
@@ -100,20 +84,16 @@ const Fundraising = () => {
     };
 
     return (
-        <View style={fundraisingStyles.container}>
-            <Text style={fundraisingStyles.title}>Fundraising</Text>
+        <View style={stylesFundraising.container}>
+            <Text style={stylesFundraising.title}>Fundraising</Text>
             <Button title="Donate Now" onPress={() => alert('Donation Successful!')} />
             <Button title="Get Message of the Day" onPress={fetchMessage} />
-            {loading ? (
-                <ActivityIndicator size="large" color="#0000ff" />
-            ) : (
-                <Text>{message}</Text>
-            )}
+            {loading ? <ActivityIndicator size="large" color="#0000ff" /> : <Text>{message}</Text>}
         </View>
     );
 };
 
-const fundraisingStyles = StyleSheet.create({
+const stylesFundraising = StyleSheet.create({
     container: {
         padding: 20,
         backgroundColor: '#f8f8f8',
@@ -141,17 +121,17 @@ const CreateEvent = () => {
     };
 
     return (
-        <View style={createEventStyles.container}>
-            <Text style={createEventStyles.title}>Create Sporting Event</Text>
+        <View style={stylesCreateEvent.container}>
+            <Text style={stylesCreateEvent.title}>Create Sporting Event</Text>
             <ScrollView>
                 <TextInput
-                    style={createEventStyles.input}
+                    style={stylesCreateEvent.input}
                     placeholder="Event Name"
                     value={eventName}
                     onChangeText={setEventName}
                 />
                 <TextInput
-                    style={createEventStyles.input}
+                    style={stylesCreateEvent.input}
                     placeholder="Event Date"
                     value={eventDate}
                     onChangeText={setEventDate}
@@ -161,9 +141,9 @@ const CreateEvent = () => {
             </ScrollView>
         </View>
     );
-};
+}
 
-const createEventStyles = StyleSheet.create({
+const stylesCreateEvent = StyleSheet.create({
     container: {
         padding: 20,
         backgroundColor: '#f8f8f8',
@@ -187,9 +167,9 @@ const createEventStyles = StyleSheet.create({
 
 export default function App() {
     return (
-        <SafeAreaView style={appStyles.container}>
+        <SafeAreaView style={stylesApp.container}>
             <ScrollView>
-                <Text style={appStyles.title}>Crowdfunding for Amateur Sports</Text>
+                <Text style={stylesApp.title}>Crowdfunding for Amateur Sports</Text>
                 <Profile />
                 <Fundraising />
                 <CreateEvent />
@@ -198,10 +178,10 @@ export default function App() {
     );
 }
 
-const appStyles = StyleSheet.create({
+const stylesApp = StyleSheet.create({
     container: {
         flex: 1,
-        paddingTop: 30, // to avoid overlapping with the status bar
+        paddingTop: 30,
         backgroundColor: '#FFFFFF',
     },
     title: {
