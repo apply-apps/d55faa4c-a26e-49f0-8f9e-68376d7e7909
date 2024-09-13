@@ -2,60 +2,67 @@
 // Combined code from all files
 
 import React, { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TextInput, Button, View } from 'react-native';
-import NfcManager, { NfcTech, Ndef } from 'react-native-nfc-manager';
+import { SafeAreaView, StyleSheet, Text, TextInput, Button, View, ScrollView, ActivityIndicator } from 'react-native';
+import axios from 'axios';
 
-NfcManager.start();
+const API_URL = 'http://apihub.p.appply.xyz:3300/chatgpt';
 
 export default function App() {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [phone, setPhone] = useState('');
+    const [heroes, setHeroes] = useState('');
+    const [villains, setVillains] = useState('');
+    const [plot, setPlot] = useState('');
+    const [story, setStory] = useState('');
+    const [loading, setLoading] = useState(false);
 
-    const handleSendNFC = async () => {
+    const fetchFairyTale = async () => {
+        setLoading(true);
         try {
-            await NfcManager.requestTechnology(NfcTech.Ndef);
+            const messages = [
+                { role: "system", content: "You are a creative assistant. Please generate an engaging fairy tale based on the given heroes, villains, and plot." },
+                { role: "user", content: `Heroes: ${heroes}` },
+                { role: "user", content: `Villains: ${villains}` },
+                { role: "user", content: `Plot: ${plot}` }
+            ];
 
-            const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nEMAIL:${email}\nTEL:${phone}\nEND:VCARD`;
-            const bytes = Ndef.encodeMessage([Ndef.textRecord(vCard)]);
+            const response = await axios.post(API_URL, {
+                messages,
+                model: "gpt-4o"
+            });
 
-            if (bytes) {
-                await NfcManager.writeNdefMessage(bytes);
-                alert("Contact details written successfully!");
-            }
-        } catch (e) {
-            console.warn(e);
-            alert("An error occurred. Please try again.");
+            setStory(response.data.response);
+        } catch (error) {
+            console.error('Error fetching story:', error);
+            alert('An error occurred while fetching the story. Please try again.');
         } finally {
-            NfcManager.setNdefDiscoveredListener(null); // Cleanup
-            NfcManager.cancelTechnologyRequest();
+            setLoading(false);
         }
     };
 
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.form}>
-                <Text style={styles.title}>Send Contact Details via NFC</Text>
+            <ScrollView contentContainerStyle={styles.scrollView}>
+                <Text style={styles.title}>Fairy Tale Generator</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Name"
-                    value={name}
-                    onChangeText={setName}
+                    placeholder="Heroes"
+                    value={heroes}
+                    onChangeText={setHeroes}
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Email"
-                    value={email}
-                    onChangeText={setEmail}
+                    placeholder="Villains"
+                    value={villains}
+                    onChangeText={setVillains}
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder "Phone"
-                    value={phone}
-                    onChangeText={setPhone}
+                    placeholder="Plot"
+                    value={plot}
+                    onChangeText={setPlot}
                 />
-                <Button title="Send via NFC" onPress={handleSendNFC} />
-            </View>
+                <Button title="Generate Fairy Tale" onPress={fetchFairyTale} />
+                {loading ? <ActivityIndicator size="large" color="#0000ff" /> : <Text style={styles.story}>{story}</Text>}
+            </ScrollView>
         </SafeAreaView>
     );
 }
@@ -68,11 +75,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    form: {
-        width: '90%',
+    scrollView: {
         padding: 20,
-        borderRadius: 10,
-        backgroundColor: '#f8f8f8',
         alignItems: 'center',
     },
     title: {
@@ -83,11 +87,17 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 40,
-        width: '100%',
+        width: '80%',
         borderColor: '#ccc',
         borderWidth: 1,
         marginBottom: 10,
         paddingHorizontal: 10,
         borderRadius: 5,
+    },
+    story: {
+        marginTop: 20,
+        fontSize: 16,
+        textAlign: 'justify',
+        paddingHorizontal: 10,
     },
 });
