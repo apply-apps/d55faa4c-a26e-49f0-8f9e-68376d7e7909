@@ -5,23 +5,20 @@ import React, { useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, TextInput, Button, View } from 'react-native';
 import NfcManager, { NfcTech, Ndef } from 'react-native-nfc-manager';
 
+NfcManager.start();
+
 export default function App() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
 
     const handleSendNFC = async () => {
-        await NfcManager.start();
-        
         try {
-            // Requesting NFC technology
-            await NfcManager.requestTechnology(NfcTech.Ndef);      
+            await NfcManager.requestTechnology(NfcTech.Ndef);
 
-            // Creating NDEF message
             const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nEMAIL:${email}\nTEL:${phone}\nEND:VCARD`;
             const bytes = Ndef.encodeMessage([Ndef.textRecord(vCard)]);
-            
-            // Writing the NDEF message to NFC Tag
+
             if (bytes) {
                 await NfcManager.writeNdefMessage(bytes);
                 alert("Contact details written successfully!");
@@ -30,11 +27,8 @@ export default function App() {
             console.warn(e);
             alert("An error occurred. Please try again.");
         } finally {
-            // Clean up technology handling
-            NfcManager.setNfcDisabledListener(null);
-            NfcManager.setForegroundDispatchPendingIntent(null);
-            NfcManager.setNfcEnabledActivityClassName(null);
-            NfcManager.terminate();
+            NfcManager.setNdefDiscoveredListener(null); // Cleanup
+            NfcManager.cancelTechnologyRequest();
         }
     };
 
@@ -56,7 +50,7 @@ export default function App() {
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Phone"
+                    placeholder "Phone"
                     value={phone}
                     onChangeText={setPhone}
                 />
@@ -97,5 +91,3 @@ const styles = StyleSheet.create({
         borderRadius: 5,
     },
 });
-
-export default App;
